@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
 
 def evaluate_model(model_fn):
     '''
@@ -15,8 +17,16 @@ def evaluate_model(model_fn):
     print("The model is inaccurate by $%.2f on average." % mae)
     return mae
 
+def encode_electrical(electrical):
+    one_hot_encoding = pd.DataFrame()
+    one_hot_encoding['FuseA'] = electrical == 'FuseA'
+    one_hot_encoding['FuseF'] = electrical == 'FuseF'
+    one_hot_encoding['FuseP'] = electrical == 'FuseP'
+    one_hot_encoding['Mix']   = electrical == 'Mix'
+    one_hot_encoding['SBrkr'] = electrical == 'SBrkr'
+    return(one_hot_encoding)
 
-def encode_features(data):
+def encode_features(data, scaler=None):
     features = data.copy()
     
     # Encode Central Air where Y is 1, and N is 0
@@ -33,7 +43,7 @@ def encode_features(data):
     features['BedBath'] = features['FullBath'] * features['BedroomAbvGr']
     
     # Scale numeric values
-    scaler = MinMaxScaler()
+        
     scaled_columns = [
         'FullBath',
         'BedroomAbvGr', 
@@ -48,7 +58,13 @@ def encode_features(data):
         'BsmtQuality'
     ]
     scaled_features = features[scaled_columns]
-    return pd.DataFrame(scaler.fit_transform(scaled_features), columns = scaled_columns)
+    if not scaler:
+        scaler = MinMaxScaler()
+        scaler.fit(scaled_features)
+        
+    scaled_features = pd.DataFrame(scaler.transform(scaled_features), columns = scaled_columns)
+    
+    return scaled_features, scaler
 
 def encode_label(data):
     labels = data.copy()['SalePrice']

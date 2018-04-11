@@ -13,8 +13,6 @@ def evaluate_model(model_fn):
     actual_values = test_data['SalePrice']
     test_input = test_data.filter(regex='^(?!SalePrice$).*') #Pass in all columns except SalePrice
     predicted_saleprice = model_fn(test_input)
-    print(predicted_saleprice)
-    print(actual_values)
     mae = np.mean(np.abs(predicted_saleprice-actual_values))
     print("The model is inaccurate by $%.2f on average." % mae)
     return mae

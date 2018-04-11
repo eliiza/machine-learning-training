@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-
+from sklearn import linear_model
 
 def evaluate_model(model_fn):
     '''
@@ -13,6 +13,8 @@ def evaluate_model(model_fn):
     actual_values = test_data['SalePrice']
     test_input = test_data.filter(regex='^(?!SalePrice$).*') #Pass in all columns except SalePrice
     predicted_saleprice = model_fn(test_input)
+    print(predicted_saleprice)
+    print(actual_values)
     mae = np.mean(np.abs(predicted_saleprice-actual_values))
     print("The model is inaccurate by $%.2f on average." % mae)
     return mae
@@ -71,7 +73,22 @@ def encode_label(data):
     scaler = MinMaxScaler()
     scaler.fit(labels)    
     labels = pd.DataFrame(scaler.transform(labels), columns = ['SalePrice'])
-    return (labels['SalePrice'], scaler)
+    return labels['SalePrice'], scaler
 
 def decode_label(data, scaler):
     return scaler.inverse_transform(data)
+
+
+def train_model(training_set, predictor=linear_model.LinearRegression()):
+    features, feature_scaler = encode_features(training_set)
+    labels, label_scaler = encode_label(training_set)
+    
+    predictor.fit(features, labels)
+    
+    def model(input_data):
+        input_features,_ = encode_features(input_data, scaler=feature_scaler)
+        
+        output_value = predictor.predict(input_features)
+        return decode_label(output_value, label_scaler)
+    
+    return model
